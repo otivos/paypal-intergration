@@ -1,6 +1,6 @@
 ((configRepo) => {
   configRepo.SetConfig = (paypal) => {
-    const config = {
+    let config = {
       host: 'api.sandbox.paypal.com',
       port: "",
       client_id: "",

@@ -1,8 +1,8 @@
-((paymentService, paypal, mongoService, OrderID) => {
+((paymentService, paypal, mongoService, ObjectID) => {
   require('./config').SetConfig(paypal);
 
   paymentService.CreateItemObj = (name, price, quantity) => {
-    const itemObj = {
+    let itemObj = {
       name: name,
       price: price,
       currency: 'USD',
@@ -12,9 +12,9 @@
   };
 
   paymentService.CreateTransactionObj = (tax, shipping, description, itemList) => {
-    const total = 0.0;
+    let total = 0.0;
     for (let i = 0; i < itemList.length; i++) {
-      const newQuant = itemList[i].quantity;
+      let newQuant = itemList[i].quantity;
       if (newQuant >= 1) {
         total += itemList[i].price;
       } else {
@@ -22,7 +22,7 @@
       }
     }
 
-    const transactionObj = {
+    let transactionObj = {
       amount: {
         total: total,
         currency: 'USD',
@@ -40,28 +40,28 @@
   };
 
   paymentService.CreateWithPaypal = (transactionsArray, returnUrl, cancelUrl, cb) => {
-    const dbObj = {
+    let dbObj = {
       OrderID: '',
       CreateTime: '',
       Transactions: ''
     };
 
     mongoService.Create('paypal_orders', dbObj, (err, results) => {
-      const paymentObj = {
-        intent: 'sale',
-        payer: {
-          payment_method: 'paypal'
+      let paymentObj = {
+        'intent': 'sale',
+        'payer': {
+          'payment_method': 'paypal'
         },
-        redirect_urls: {
-          return_url: returnUrl + '/' + results.insertedIds[0],
-          cancelUrl: cancelUrl + '/' + results.insertedIds[0]
+        'redirect_urls': {
+          'return_url': returnUrl + '/' + results.insertedIds[0],
+          'cancelUrl': cancelUrl + '/' + results.insertedIds[0]
         },
-        transactions: transactionsArray
+        'transactions': transactionsArray
       };
 
       paypal.payment.create(paymentObj, (err, response) => {
         if (err) {
-          return cb(err)
+          return cb(err);
         } else {
           dbObj = {
             OrderID: response.id,
@@ -84,6 +84,7 @@
   paymentService.GetPayment = (paymentID, cb) => {
     paypal.payment.get(paymentID, (err, payment) => {
       if (err) {
+        console.log(err);
         return cb(err);
       } else {
         return cb(null, payment);
@@ -92,7 +93,7 @@
   };
 
   paymentService.ExecutePayment = (payerID, orderID, cb) => {
-    const payerObj = { payer_id: payerID };
+    let payerObj = { payer_id: payerID };
     mongoService.Read('paypal_orders', { _id: new ObjectID(orderID) }, (err, results) => {
       if (results) {
         paypal.payment.execute(results[0].OrderID, payerObj, {}, (err, response) => {
@@ -100,7 +101,7 @@
             return cb(err)
           }
           if (response) {
-            const updateObj = {
+            let updateObj = {
               OrderDetails: response
             };
             mongoService.Update('paypal_orders', { _id: new ObjectID(orderID), updateObj }, (err, update_results) => {
@@ -115,14 +116,14 @@
   };
 
   paymentService.RefundPayment = (saleID, amount, cb) => {
-    const data = {
-      amount: {
-        currency: 'USD',
-        total: amount
+    let data = {
+      'amount': {
+        'currency': 'USD',
+        'total': amount
       }
     };
     paypal.sale.refund(saleID, data, (err, refund) => {
-      if(err) {
+      if (err) {
         return cb(err);
       } else {
         return cb(null, refund);
@@ -135,6 +136,5 @@
     module.exports,
     require('paypal-rest-sdk'),
     require('./mongoService'),
-    require('mongodb').OrderId
+    require('mongodb').ObjectId
   );
-  

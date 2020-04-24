@@ -1,43 +1,66 @@
-((express, server, bodyParser, fs) => {
+((express, server, bodyParser, fs, squatchPurchaseRepo) => {
   server.use(bodyParser.urlencoded({ extended: true }));
   server.use(express.static('pub'));
 
-  server.use('/', (req, res) => {
+  /* ---------------------------------------------------------
+  home page
+  */
+  server.get('/', (req, res) => {
     fs.readFile('./templates/home.html', (err, results) => {
       res.send(results.toString());
     });
   });
+/* ----------------------------------------------------------- */
 
-  server.use('/success/:orderId', (req, res) => {
-    const orderId = request.params.orderId;
+
+/* ---------------------single purchase-------------------- */
+server.post('/buysingle', (req, res) => {
+  let quantity = req.body.Quantity;
+  let purchaseName = 'Single Squatch Habitat';
+  let purchasePrice = 10.0;
+  let taxPrice = 0;
+  let shippingPrice = 0;
+  let description = 'Single Habitat Sasquatch Starter Kit';
+
+  squatchPurchaseRepo.BuySingle(purchaseName, purchasePrice, taxPrice, 
+    shippingPrice, quantity, description, (err, url) => {
+      if(err) {
+        res.json(err);
+      } else {
+        res.redirect(url);
+      }
+    });
+});
+
+  server.use('/success/:orderID', (req, res) => {
+    const orderID = req.params.orderID;
+    res.send(orderID);
   });
 
-  server.use('/cancel/:orderId', (req, res) => {
-    const orderId = request.params.orderId;
+  server.use('/cancel/:orderID', (req, res) => {
+    const orderID = req.params.orderID;
   });
 
-  server.use('/orderdetails/:orderId', (req, res) => {
-    const orderId = request.params.orderId;
+  server.use('/orderdetails/:orderID', (req, res) => {
+    const orderID = req.params.orderID;
   });
 
-  server.use('/refund/:orderId', (req, res) => {
-    const orderId = request.params.orderId;
+  server.use('/refund/:orderID', (req, res) => {
+    const orderID = req.params.orderID;
   });
 
-  server.use('/recurring_success/:planId', (req, res) => {
-    const planId = request.params.planId;
+  /* ---------Recurring Purchases---------- */
+
+  server.use('/recurring_success/:planID', (req, res) => {
+    const planID = req.params.planID;
   });
 
-  server.use('/recurring_cancel/:planId', (req, res) => {
-    const planId = request.params.planId;
+  server.use('/recurring_cancel/:planID', (req, res) => {
+    const planID = req.params.planID;
   });
 
-  server.use('/recurring_orderdetails/:agreementId', (req, res) => {
-    const agreementId = request.params.agreementId;
-  });
-
-  server.post('/buysingle', (req, res) => {
-    const quantity = request.body.Quantity;
+  server.use('/recurring_orderdetails/:agreementID', (req, res) => {
+    const agreementID = req.params.agreementID;
   });
 
   server.post('/buyrecurring', (req, res) => {
@@ -53,5 +76,6 @@
     require('express'),
     require('express')(),
     require('body-parser'),
-    require('fs')
+    require('fs'),
+    require('./repos/squatchPurchaseRepo')
   );
